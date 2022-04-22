@@ -32,8 +32,8 @@ spec:
 
       oc login \
         --token "$OPENSHIFT_TOKEN" \
-        "$(params.openshift-server-url)"
-        --insecure-skip-tls-verify
+        "$(params.openshift-server-url)" \
+        --insecure-skip-tls-verify=true
 
       PIPELINERUN=$(
         tkn pipeline start \
