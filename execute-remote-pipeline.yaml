@@ -37,13 +37,13 @@ spec:
       PIPELINERUN=$(
         tkn pipeline start \
           --namespace $(params.pipeline-namespace) \
-          $(params.pipeline-name) \
-          | sed --quiet 's/Pipelinerun started: \(.*\)/\1/p'
+          $(params.pipeline-name) --no-color \
+          | awk '/PipelineRun started/ {print $NF}'
       )
 
       tkn pipelinerun logs \
         --namespace $(params.pipeline-namespace) \
-        --follow "$PIPELINERUN"
+        --follow "$PIPELINERUN" --no-color
 
       STATUS=$(
         oc get pipelinerun \
