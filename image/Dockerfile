@@ -7,4 +7,4 @@ FROM registry.redhat.io/openshift4/ose-cli
 
 ARG TKN_VERSION=0.20.0
 RUN ARCH=$(uname -m) && [ "$ARCH" == "amd64" ] && ARCH=64bit ; \
-    rpm --install https://github.com/tektoncd/cli/releases/download/v$TKN_VERSION/tektoncd-cli-$TKN_VERSION_Linux-$ARCH.rpm
+    rpm --install https://github.com/tektoncd/cli/releases/download/v${TKN_VERSION}/tektoncd-cli-${TKN_VERSION}_Linux-${ARCH}.rpm
