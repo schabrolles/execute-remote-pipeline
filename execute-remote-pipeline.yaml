@@ -60,7 +60,7 @@ spec:
           --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].message}'
         exit 1
       fi
-    image: quay.io/noseka1/execute-remote-pipeline:latest
+    image: quay.io/schabrolles/execute-remote-pipeline:latest
     env:
     - name: OPENSHIFT_TOKEN
       valueFrom:
