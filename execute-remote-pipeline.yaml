@@ -10,6 +10,10 @@ spec:
   - name: pipeline-namespace
     type: string
     description: Which namespace is the pipeline located in?
+  - name: pipeline-args
+    type: string
+    description: additional parameters to provide during pipeline start (workspace ...)
+    default: ''
   - name: openshift-server-url
     type: string
     description: URL of the remote OpenShift API server
@@ -38,21 +42,23 @@ spec:
       PIPELINERUN=$(
         tkn pipeline start \
           --namespace $(params.pipeline-namespace) \
-          $(params.pipeline-name) --no-color \
+          $(params.pipeline-name) $(params.pipeline-args)\
           | awk '/PipelineRun started/ {print $NF}'
       )
+      # echo $PIPELINERUN
+      # echo "pipelinerun logs $PIPELINERUN -n $(params.pipeline-namespace) --follow"
+      tkn pipelinerun logs $PIPELINERUN
+      tkn pipelinerun logs $PIPELINERUN -n $(params.pipeline-namespace) --follow
 
-      tkn pipelinerun logs \
-        --namespace $(params.pipeline-namespace) \
-        --follow "$PIPELINERUN" --no-color
-
-      STATUS=$(
+      STATUS=$( 
         oc get pipelinerun \
           --namespace $(params.pipeline-namespace) \
           "$PIPELINERUN" \
           --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
       )
 
+      echo ""
+      
       if [ "$STATUS" != True ]; then
         echo "Remote pipeline failed:"
         oc get pipelinerun \
@@ -60,6 +66,12 @@ spec:
           "$PIPELINERUN" \
           --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].message}'
         exit 1
+      else
+        echo "Remote pipeline finished"
+        oc get pipelinerun \
+          --namespace $(params.pipeline-namespace) \
+          "$PIPELINERUN" \
+          --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].message}'
       fi
     image: quay.io/schabrolles/execute-remote-pipeline:latest
     env:
