@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi8
 #FROM registry.redhat.io/openshift4/ose-cli
 
 RUN ARCH=$(uname -m) && curl --location \
-  https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp/stable/openshift-client-linux.tar.gz \
+  https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp/stable/openshift-client-linux.tar.gz | \
   tar xvfz - --directory /usr/local/bin
 
 ARG TKN_VERSION=0.20.0
