@@ -1,4 +1,4 @@
-FROM registry.redhat.io/ubi8:8.5-239.1651231664
+FROM registry.access.redhat.com/ubi8
 #FROM registry.redhat.io/openshift4/ose-cli
 
 RUN ARCH=$(uname -m) && curl --location \
