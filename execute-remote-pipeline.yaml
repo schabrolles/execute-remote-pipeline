@@ -1,82 +1,85 @@
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: execute-remote-pipeline
 spec:
   params:
-  - name: pipeline-name
-    type: string
-    description: Name of the pipeline to execute
-  - name: pipeline-namespace
-    type: string
-    description: Which namespace is the pipeline located in?
-  - name: pipeline-args
-    type: string
-    description: additional parameters to provide during pipeline start (workspace ...)
-    default: ''
-  - name: openshift-server-url
-    type: string
-    description: URL of the remote OpenShift API server
-  - name: openshift-token-secret
-    type: string
-    description: Name of the secret holding the authentication token
+    - description: Name of the pipeline to execute
+      name: pipeline-name
+      type: string
+    - description: Which namespace is the pipeline located in?
+      name: pipeline-namespace
+      type: string
+    - default: ''
+      description: additional parameters to provide during pipeline start (workspace ...)
+      name: pipeline-args
+      type: string
+    - description: URL of the remote OpenShift API server
+      name: openshift-server-url
+      type: string
+    - description: Name of the secret holding the authentication token
+      name: openshift-token-secret
+      type: string
   steps:
-  - name: execute-remote-pipeline-step
-    command:
-    - /bin/bash
-    args:
-    - -c
-    - |
-      set -e
+    - args:
+        - '-c'
+        - >
+          set -e
 
-      if [ -z "$OPENSHIFT_TOKEN" ]; then
-        echo OPENSHIFT_TOKEN is empty
-        exit 1
-      fi
+          if [ -z "$OPENSHIFT_TOKEN" ]; then
+            echo OPENSHIFT_TOKEN is empty
+            exit 1
+          fi
 
-      oc login \
-        --token "$OPENSHIFT_TOKEN" \
-        "$(params.openshift-server-url)" \
-        --insecure-skip-tls-verify=true
+          oc login \
+            --token "$OPENSHIFT_TOKEN" \
+            "$(params.openshift-server-url)" \
+            --insecure-skip-tls-verify=true
 
-      PIPELINERUN=$(
-        tkn pipeline start \
-          --namespace $(params.pipeline-namespace) \
-          $(params.pipeline-name) $(params.pipeline-args)\
-          | awk '/PipelineRun started/ {print $NF}'
-      )
-      # echo $PIPELINERUN
-      # echo "pipelinerun logs $PIPELINERUN -n $(params.pipeline-namespace) --follow"
-      tkn pipelinerun logs $PIPELINERUN
-      tkn pipelinerun logs $PIPELINERUN -n $(params.pipeline-namespace) --follow
+          PIPELINERUN=$(
+            tkn pipeline start \
+              --namespace $(params.pipeline-namespace) \
+              $(params.pipeline-name) $(params.pipeline-args)\
+              | sed --quiet 's/PipelineRun started: \(.*\)/\1/p'
+          ) echo "" echo "tekton version:" tkn version echo "" echo "tkn
+          pipelinerun logs --namespace $(params.pipeline-namespace) --follow
+          ${PIPELINERUN}"
 
-      STATUS=$( 
-        oc get pipelinerun \
-          --namespace $(params.pipeline-namespace) \
-          "$PIPELINERUN" \
-          --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
-      )
+          tkn pipelinerun logs \
+            --namespace $(params.pipeline-namespace) \
+            --follow "$PIPELINERUN"
 
-      echo ""
-      
-      if [ "$STATUS" != True ]; then
-        echo "Remote pipeline failed:"
-        oc get pipelinerun \
-          --namespace $(params.pipeline-namespace) \
-          "$PIPELINERUN" \
-          --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].message}'
-        exit 1
-      else
-        echo "Remote pipeline finished"
-        oc get pipelinerun \
-          --namespace $(params.pipeline-namespace) \
-          "$PIPELINERUN" \
-          --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].message}'
-      fi
-    image: quay.io/schabrolles/execute-remote-pipeline:latest
-    env:
-    - name: OPENSHIFT_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: $(params.openshift-token-secret)
-          key: openshift-token
+          STATUS=$( 
+            oc get pipelinerun \
+              --namespace $(params.pipeline-namespace) \
+              "$PIPELINERUN" \
+              --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}'
+          )
+
+          echo ""
+
+          if [ "$STATUS" != True ]; then
+            echo "Remote pipeline failed:"
+            oc get pipelinerun \
+              --namespace $(params.pipeline-namespace) \
+              "$PIPELINERUN" \
+              --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].message}'
+            exit 1
+          else
+            echo "Remote pipeline finished"
+            oc get pipelinerun \
+              --namespace $(params.pipeline-namespace) \
+              "$PIPELINERUN" \
+              --output jsonpath='{.status.conditions[?(@.type=="Succeeded")].message}'
+          fi
+      command:
+        - /bin/bash
+      env:
+        - name: OPENSHIFT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: openshift-token
+              name: $(params.openshift-token-secret)
+      image: 'quay.io/schabrolles/execute-remote-pipeline:stable'
+      name: execute-remote-pipeline-step
+      resources: {}
