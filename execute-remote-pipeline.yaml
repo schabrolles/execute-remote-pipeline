@@ -23,7 +23,7 @@ spec:
   steps:
     - args:
         - '-c'
-        - >
+        - |
           set -e
 
           if [ -z "$OPENSHIFT_TOKEN" ]; then
@@ -41,9 +41,13 @@ spec:
               --namespace $(params.pipeline-namespace) \
               $(params.pipeline-name) $(params.pipeline-args)\
               | sed --quiet 's/PipelineRun started: \(.*\)/\1/p'
-          ) echo "" echo "tekton version:" tkn version echo "" echo "tkn
-          pipelinerun logs --namespace $(params.pipeline-namespace) --follow
-          ${PIPELINERUN}"
+          ) 
+          
+          echo "" 
+          echo "tekton version:" 
+          tkn version 
+          echo "" 
+          echo "tkn pipelinerun logs --namespace $(params.pipeline-namespace) --follow ${PIPELINERUN}"
 
           tkn pipelinerun logs \
             --namespace $(params.pipeline-namespace) \
