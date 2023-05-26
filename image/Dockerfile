@@ -5,6 +5,6 @@ RUN ARCH=$(uname -m) && curl --location \
   https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp/stable/openshift-client-linux.tar.gz | \
   tar xvfz - --directory /usr/local/bin
 
-ARG TKN_VERSION=0.15.0
+ARG TKN_VERSION=0.31.0
 RUN ARCH=$(uname -m) && [ "$ARCH" == "x86_64" ] && ARCH=64bit ; \
     rpm --install https://github.com/tektoncd/cli/releases/download/v${TKN_VERSION}/tektoncd-cli-${TKN_VERSION}_Linux-${ARCH}.rpm
